@@ -263,8 +263,14 @@ def setup_swift_builder(env, apple_platform, sdk_path, current_path, bridging_he
     elif apple_platform == "visionossimulator":
         target_suffix = "xros26.0-simulator"
 
+    elif apple_platform == "appletvos":
+        target_suffix = "tvos15.0"
+
+    elif apple_platform == "appletvsimulator":
+        target_suffix = "tvos15.0-simulator"
+
     else:
-        raise Exception("Invalid platform argument passed to detect_darwin_sdk_path")
+        raise Exception("Invalid platform argument passed to setup_swift_builder")
 
     swiftc_target = env["arch"] + "-apple-" + target_suffix
 
