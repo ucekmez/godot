@@ -118,3 +118,18 @@ float DisplayServerTVOS::screen_get_scale(int p_screen) const {
 
 	return [UIScreen mainScreen].scale;
 }
+
+Rect2i DisplayServerTVOS::get_display_safe_area() const {
+	// tvOS has no notch / home indicator and does not surface the TV overscan margin
+	// through the view's safeAreaInsets (overscan is handled at the UIScreen level, not
+	// the app's view), so honouring the title-safe area is the app's responsibility.
+	// Apply the tvOS HIG title-safe inset (~5%, i.e. ~90pt horizontal / ~60pt vertical
+	// at 1080p) so menus and HUD never sit hard against the TV edge where overscan would
+	// clip them.  Resolution / scale independent (5% of 1920 == 96px; 5% of 1080 == 54px).
+	Point2i pos = screen_get_position();
+	Size2i size = screen_get_size();
+	const float title_safe_inset = 0.05f;
+	int margin_x = (int)(size.width * title_safe_inset);
+	int margin_y = (int)(size.height * title_safe_inset);
+	return Rect2i(pos.x + margin_x, pos.y + margin_y, size.width - 2 * margin_x, size.height - 2 * margin_y);
+}

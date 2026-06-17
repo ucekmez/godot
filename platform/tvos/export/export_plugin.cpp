@@ -63,6 +63,13 @@ void EditorExportPlatformTVOS::get_export_options(List<ExportOption> *r_options)
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@3x", PROPERTY_HINT_FILE_PATH, "*.png,*.jpg,*.jpeg"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "storyboard/use_custom_bg_color"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::COLOR, "storyboard/custom_bg_color"), Color()));
+
+	// tvOS uses a layered parallax App Icon + Top Shelf "*.brandassets" catalog, which
+	// the flat iOS appiconset path cannot produce.  Point this at a prebuilt catalog
+	// (e.g. authored from the project icon) and it is copied into the exported
+	// Images.xcassets and wired via ASSETCATALOG_COMPILER_APPICON_NAME.  Empty = fall
+	// back to a flat icon set from the project icon.
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/tvos_brand_assets", PROPERTY_HINT_GLOBAL_DIR), ""));
 }
 
 bool EditorExportPlatformTVOS::has_valid_export_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates, bool p_debug) const {
@@ -231,6 +238,36 @@ Vector<EditorExportPlatformAppleEmbedded::IconInfo> EditorExportPlatformTVOS::ge
 }
 
 Error EditorExportPlatformTVOS::_export_icons(const Ref<EditorExportPreset> &p_preset, const String &p_iconset_dir) {
+	// tvOS prefers a layered "*.brandassets" catalog (parallax App Icon + Top Shelf).
+	// If the preset supplies one, copy it into Images.xcassets verbatim and skip the
+	// flat appiconset below (the asset-catalog app-icon name is rewritten to match in
+	// _process_config_file_line).  The PNGs are already correctly sized, so no image
+	// math is needed — we copy what works rather than re-deriving the parallax layers.
+	String brand_assets = p_preset->get("icons/tvos_brand_assets");
+	if (!brand_assets.is_empty()) {
+		String src = ProjectSettings::get_singleton()->globalize_path(brand_assets).trim_suffix("/");
+		Ref<DirAccess> fs = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+		if (fs.is_null() || !fs->dir_exists(src)) {
+			add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat(TTR("tvOS brand assets directory not found: \"%s\"."), src));
+			return ERR_FILE_NOT_FOUND;
+		}
+		// p_iconset_dir is "<binary>/Images.xcassets/AppIcon.appiconset/"; the catalog
+		// must be a sibling directly under Images.xcassets, so step up past the trailing
+		// slash AND the appiconset component before joining the catalog's folder name.
+		String xcassets_dir = p_iconset_dir.trim_suffix("/").get_base_dir();
+		String catalog_name = src.get_file(); // e.g. "App Icon & Top Shelf Image.brandassets"
+		String dest = xcassets_dir.path_join(catalog_name);
+		Error cerr = fs->copy_dir(src, dest);
+		if (cerr != OK) {
+			add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat(TTR("Failed to copy tvOS brand assets from \"%s\"."), src));
+			return cerr;
+		}
+		// Drop the empty flat AppIcon.appiconset the base pre-created: actool flags an
+		// appiconset with no Contents.json, and the brandassets is now the app icon.
+		fs->remove(p_iconset_dir.trim_suffix("/"));
+		return OK;
+	}
+
 	String json_description = "{\"images\":[";
 	String sizes;
 
@@ -462,6 +499,20 @@ String EditorExportPlatformTVOS::_process_config_file_line(const Ref<EditorExpor
 		// Valid Archs
 	} else if (p_line.contains("$valid_archs")) {
 		strnew += p_line.replace("$valid_archs", "arm64 x86_64") + "\n";
+
+		// tvOS app-icon catalog name: when a brandassets catalog is supplied, point the
+		// asset-catalog app icon at it (named after the folder, minus ".brandassets");
+		// otherwise leave the template's flat "AppIcon".  The shared template ships the
+		// literal `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;`, so iOS/visionOS — which
+		// never reach this tvOS override — keep "AppIcon" untouched.
+	} else if (p_line.contains("ASSETCATALOG_COMPILER_APPICON_NAME")) {
+		String brand_assets = p_preset->get("icons/tvos_brand_assets");
+		if (!brand_assets.is_empty()) {
+			String name = ProjectSettings::get_singleton()->globalize_path(brand_assets).trim_suffix("/").get_file().trim_suffix(".brandassets");
+			strnew += p_line.replace("AppIcon", "\"" + name + "\"") + "\n";
+		} else {
+			strnew += p_line + "\n";
+		}
 
 		// Apple Embedded common
 	} else {
