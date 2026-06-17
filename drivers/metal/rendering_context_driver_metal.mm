@@ -192,11 +192,16 @@ public:
 		count--;
 		front = (front + 1) % frame_buffers.size();
 
+#if defined(TVOS_ENABLED)
+		// tvOS has no -presentDrawable:afterMinimumDuration: (frame pacing) — present plainly.
+		[p_cmd_buffer->get_command_buffer() presentDrawable:drawable];
+#else
 		if (vsync_mode != DisplayServer::VSYNC_DISABLED) {
 			[p_cmd_buffer->get_command_buffer() presentDrawable:drawable afterMinimumDuration:present_minimum_duration];
 		} else {
 			[p_cmd_buffer->get_command_buffer() presentDrawable:drawable];
 		}
+#endif
 	}
 };
 

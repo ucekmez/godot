@@ -35,7 +35,9 @@
 #import "drivers/metal/rendering_device_driver_metal.h"
 
 #import <Metal/Metal.h>
+#if !defined(TVOS_ENABLED)
 #import <MetalFX/MetalFX.h>
+#endif
 
 using namespace RendererRD;
 
@@ -51,6 +53,11 @@ MFXSpatialEffect::~MFXSpatialEffect() {
 }
 
 void MFXSpatialEffect::callback(RDD *p_driver, RDD::CommandBufferID p_command_buffer, CallbackArgs *p_userdata) {
+#if defined(TVOS_ENABLED)
+	// MetalFX is unavailable on tvOS; this callback is never registered (the spatial feature
+	// is reported as unsupported), so it only needs to exist for linking.
+	CallbackArgs::free(&p_userdata);
+#else
 	GODOT_CLANG_WARNING_PUSH_AND_IGNORE("-Wunguarded-availability")
 
 	MDCommandBuffer *obj = (MDCommandBuffer *)(p_command_buffer.id);
@@ -73,6 +80,7 @@ void MFXSpatialEffect::callback(RDD *p_driver, RDD::CommandBufferID p_command_bu
 	CallbackArgs::free(&p_userdata);
 
 	GODOT_CLANG_WARNING_POP
+#endif
 }
 
 void MFXSpatialEffect::ensure_context(Ref<RenderSceneBuffersRD> p_render_buffers) {
@@ -96,6 +104,10 @@ void MFXSpatialEffect::process(Ref<RenderSceneBuffersRD> p_render_buffers, RID p
 }
 
 MFXSpatialContext *MFXSpatialEffect::create_context(CreateParams p_params) const {
+#if defined(TVOS_ENABLED)
+	// MetalFX is unavailable on tvOS; never called (SUPPORTS_METALFX_SPATIAL is reported false).
+	return nullptr;
+#else
 	DEV_ASSERT(RD::get_singleton()->has_feature(RD::SUPPORTS_METALFX_SPATIAL));
 
 	GODOT_CLANG_WARNING_PUSH_AND_IGNORE("-Wunguarded-availability")
@@ -121,6 +133,7 @@ MFXSpatialContext *MFXSpatialEffect::create_context(CreateParams p_params) const
 	GODOT_CLANG_WARNING_POP
 
 	return context;
+#endif
 }
 
 #ifdef METAL_MFXTEMPORAL_ENABLED
