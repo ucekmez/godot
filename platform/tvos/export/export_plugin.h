@@ -60,7 +60,7 @@ public:
 
 	virtual void get_platform_features(List<String> *r_features) const override {
 		EditorExportPlatformAppleEmbedded::get_platform_features(r_features);
-		r_features->push_back("ios");
+		r_features->push_back("tvos");
 	}
 
 	virtual void initialize() override;

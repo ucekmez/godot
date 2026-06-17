@@ -137,6 +137,18 @@ HashMap<String, Variant> EditorExportPlatformTVOS::get_custom_project_settings(c
 		}
 	}
 	settings["ios/launch_screen_image_mode"] = value;
+
+	// tvOS is Metal-only (no GL / ANGLE backend), so it MUST run the Mobile renderer on the
+	// Metal RenderingDevice.  The project ships gl_compatibility (for iOS), and tvOS reports
+	// BOTH the "mobile" and "tvos" feature tags — so a project-level rendering_method.tvos
+	// override is ambiguous against rendering_method.mobile, and Godot strips unknown-feature
+	// overrides on export anyway.  Pin the renderer here, in the exported settings, where it
+	// can't be defeated by feature-tag ordering: force the Mobile renderer on both the base
+	// and the .mobile override (the one that wins on tvOS).  Without this the DisplayServer
+	// tries the opengl3 driver, which has no tvOS backend, and aborts at startup.
+	settings["rendering/renderer/rendering_method"] = "mobile";
+	settings["rendering/renderer/rendering_method.mobile"] = "mobile";
+
 	return settings;
 }
 
