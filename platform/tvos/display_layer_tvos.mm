@@ -40,9 +40,11 @@
 
 #import <AudioToolbox/AudioServices.h>
 #import <GameController/GameController.h>
+#ifdef GLES3_ENABLED
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES1/gl.h>
 #import <OpenGLES/ES1/glext.h>
+#endif
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
@@ -69,6 +71,8 @@
 
 @end
 
+// tvOS has no OpenGL ES renderer (Metal-only); the GL display layer is GLES3-gated.
+#ifdef GLES3_ENABLED
 @implementation GDTOpenGLLayer {
 	// The pixel dimensions of the backbuffer
 	GLint backingWidth;
@@ -189,3 +193,4 @@
 }
 
 @end
+#endif // GLES3_ENABLED
