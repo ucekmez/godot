@@ -38,7 +38,9 @@
 #include "core/os/keyboard.h"
 #include "core/string/ustring.h"
 
+#if !defined(TVOS_ENABLED) // CoreMotion (device motion sensors) is not available on tvOS.
 #import <CoreMotion/CoreMotion.h>
+#endif
 
 static const int max_touches = 32;
 static const float earth_gravity = 9.80665;
@@ -58,7 +60,9 @@ static const float earth_gravity = 9.80665;
 
 @property(strong, nonatomic) CALayer<GDTDisplayLayer> *renderingLayer;
 
+#if !defined(TVOS_ENABLED)
 @property(strong, nonatomic) CMMotionManager *motionManager;
+#endif
 
 @property(assign, nonatomic) BOOL delegateDidFinishSetUp;
 
@@ -102,10 +106,12 @@ static const float earth_gravity = 9.80665;
 		self.renderingLayer = nil;
 	}
 
+#if !defined(TVOS_ENABLED)
 	if (self.motionManager) {
 		[self.motionManager stopDeviceMotionUpdates];
 		self.motionManager = nil;
 	}
+#endif
 
 	if (self.displayLink) {
 		[self.displayLink invalidate];
@@ -132,8 +138,11 @@ static const float earth_gravity = 9.80665;
 
 	[self initTouches];
 
+#if !defined(TVOS_ENABLED) // No touchscreen on tvOS.
 	self.multipleTouchEnabled = YES;
+#endif
 
+#if !defined(TVOS_ENABLED) // CoreMotion (accelerometer/gyro/magnetometer) is not on tvOS.
 	// Configure and start accelerometer
 	if (!self.motionManager) {
 		self.motionManager = [[CMMotionManager alloc] init];
@@ -144,6 +153,7 @@ static const float earth_gravity = 9.80665;
 			self.motionManager = nil;
 		}
 	}
+#endif
 }
 
 - (void)system_theme_changed {
@@ -381,6 +391,7 @@ static const float earth_gravity = 9.80665;
 // MARK: Motion
 
 - (void)handleMotion {
+#if !defined(TVOS_ENABLED) // tvOS has no CoreMotion device-motion sensors.
 	if (!self.motionManager) {
 		return;
 	}
@@ -450,6 +461,7 @@ static const float earth_gravity = 9.80665;
 			DisplayServerAppleEmbedded::get_singleton()->update_gyroscope(Vector3(rotation.x, rotation.y, rotation.z));
 		} break;
 	}
+#endif // !TVOS_ENABLED
 }
 
 @end

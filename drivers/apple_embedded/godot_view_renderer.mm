@@ -39,7 +39,9 @@
 #include "servers/audio/audio_server.h"
 
 #import <AudioToolbox/AudioServices.h>
+#if !defined(TVOS_ENABLED) // CoreMotion is not available on tvOS.
 #import <CoreMotion/CoreMotion.h>
+#endif
 #import <GameController/GameController.h>
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>

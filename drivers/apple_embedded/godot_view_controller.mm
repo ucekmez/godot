@@ -167,7 +167,9 @@
 	[self observeKeyboard];
 	[self displayLoadingOverlay];
 
+#if !defined(TVOS_ENABLED) // tvOS has no screen-edge system gestures.
 	[self setNeedsUpdateOfScreenEdgesDeferringSystemGestures];
+#endif
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -188,6 +190,7 @@
 	self.keyboardView = [GDTKeyboardInputView new];
 	[self.view addSubview:self.keyboardView];
 
+#if !defined(TVOS_ENABLED) // tvOS posts no UIKeyboard show/hide notifications.
 	print_verbose("Adding observer for keyboard show/hide.");
 	[[NSNotificationCenter defaultCenter]
 			addObserver:self
@@ -199,6 +202,7 @@
 			   selector:@selector(keyboardHidden:)
 				   name:UIKeyboardDidHideNotification
 				 object:nil];
+#endif
 }
 
 - (void)displayLoadingOverlay {
@@ -363,6 +367,7 @@
 // MARK: Keyboard
 
 - (void)keyboardOnScreen:(NSNotification *)notification {
+#if !defined(TVOS_ENABLED) // tvOS posts no UIKeyboard frame info (no overlapping software keyboard).
 	NSDictionary *info = notification.userInfo;
 	NSValue *value = info[UIKeyboardFrameEndUserInfoKey];
 
@@ -372,6 +377,7 @@
 	if (DisplayServerAppleEmbedded::get_singleton()) {
 		DisplayServerAppleEmbedded::get_singleton()->virtual_keyboard_set_height(keyboardFrame.size.height);
 	}
+#endif
 }
 
 - (void)keyboardHidden:(NSNotification *)notification {

@@ -111,7 +111,9 @@ static GDTViewController *mainViewController = nil;
 		category = AVAudioSessionCategoryMultiRoute;
 	} else if (sessionCategorySetting == SESSION_CATEGORY_PLAY_AND_RECORD) {
 		category = AVAudioSessionCategoryPlayAndRecord;
+#if !defined(TVOS_ENABLED) // DefaultToSpeaker is not available on tvOS (fixed audio output).
 		options |= AVAudioSessionCategoryOptionDefaultToSpeaker;
+#endif
 		options |= AVAudioSessionCategoryOptionAllowBluetoothA2DP;
 		options |= AVAudioSessionCategoryOptionAllowAirPlay;
 	} else if (sessionCategorySetting == SESSION_CATEGORY_PLAYBACK) {
