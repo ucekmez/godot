@@ -37,8 +37,8 @@ class EditorExportPlatformTVOS : public EditorExportPlatformAppleEmbedded {
 
 	static Vector<String> device_types;
 
-	virtual String get_platform_name() const override { return "ios"; }
-	virtual String get_sdk_name() const override { return "iphoneos"; }
+	virtual String get_platform_name() const override { return "tvos"; }
+	virtual String get_sdk_name() const override { return "appletvos"; }
 	virtual const Vector<String> get_device_types() const override { return device_types; }
 
 	virtual String get_minimum_deployment_target() const override { return "14.0"; }

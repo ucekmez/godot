@@ -39,7 +39,7 @@ Vector<String> EditorExportPlatformTVOS::device_types({ "iPhone", "iPad" });
 
 void EditorExportPlatformTVOS::initialize() {
 	if (EditorNode::get_singleton()) {
-		EditorExportPlatformAppleEmbedded::_initialize(_ios_logo_svg, _ios_run_icon_svg);
+		EditorExportPlatformAppleEmbedded::_initialize(_tvos_logo_svg, _tvos_run_icon_svg);
 #ifdef MACOS_ENABLED
 		_start_remote_device_poller_thread();
 #endif
@@ -56,7 +56,7 @@ void EditorExportPlatformTVOS::get_export_options(List<ExportOption> *r_options)
 	EditorExportPlatformAppleEmbedded::get_export_options(r_options);
 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "application/targeted_device_family", PROPERTY_HINT_ENUM, "iPhone,iPad,iPhone & iPad"), 2));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "application/min_ios_version"), get_minimum_deployment_target()));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "application/min_tvos_version"), get_minimum_deployment_target()));
 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "storyboard/image_scale_mode", PROPERTY_HINT_ENUM, "Same as Logo,Center,Scale to Fit,Scale to Fill,Scale"), 0));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@2x", PROPERTY_HINT_FILE_PATH, "*.png,*.jpg,*.jpeg"), ""));
@@ -72,7 +72,7 @@ bool EditorExportPlatformTVOS::has_valid_export_configuration(const Ref<EditorEx
 	String rendering_method = get_project_setting(p_preset, "rendering/renderer/rendering_method.mobile");
 	String rendering_driver = get_project_setting(p_preset, "rendering/rendering_device/driver." + get_platform_name());
 	if ((rendering_method == "forward_plus" || rendering_method == "mobile") && rendering_driver == "metal") {
-		float version = p_preset->get("application/min_ios_version").operator String().to_float();
+		float version = p_preset->get("application/min_tvos_version").operator String().to_float();
 		if (version < 14.0) {
 			err += TTR("Metal renderer require iOS 14+.") + "\n";
 		}
@@ -391,35 +391,20 @@ String EditorExportPlatformTVOS::_process_config_file_line(const Ref<EditorExpor
 
 	String strnew;
 
-	// Supported Destinations
+	// Supported Destinations — tvOS is its own device family (TARGETED_DEVICE_FAMILY = 3).
 	if (p_line.contains("$targeted_device_family")) {
-		String xcode_value;
-		switch ((int)p_preset->get("application/targeted_device_family")) {
-			case 0: // iPhone
-				xcode_value = "1";
-				break;
-			case 1: // iPad
-				xcode_value = "2";
-				break;
-			case 2: // iPhone & iPad
-				xcode_value = "1,2";
-				break;
-		}
-		strnew += p_line.replace("$targeted_device_family", xcode_value) + "\n";
+		strnew += p_line.replace("$targeted_device_family", "3") + "\n";
 
-		// MoltenVK Framework
+		// MoltenVK Framework — SKIPPED on tvOS: the game uses the native Metal RD (not the
+		// Vulkan-over-MoltenVK path), and Godot's bundled MoltenVK has no tvOS slice.
 	} else if (p_line.contains("$moltenvk_buildfile")) {
-		String value = "9039D3BE24C093AC0020482C /* MoltenVK.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9039D3BD24C093AC0020482C /* MoltenVK.xcframework */; };";
-		strnew += p_line.replace("$moltenvk_buildfile", value) + "\n";
+		strnew += p_line.replace("$moltenvk_buildfile", "") + "\n";
 	} else if (p_line.contains("$moltenvk_fileref")) {
-		String value = "9039D3BD24C093AC0020482C /* MoltenVK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = MoltenVK; path = MoltenVK.xcframework; sourceTree = \"<group>\"; };";
-		strnew += p_line.replace("$moltenvk_fileref", value) + "\n";
+		strnew += p_line.replace("$moltenvk_fileref", "") + "\n";
 	} else if (p_line.contains("$moltenvk_buildphase")) {
-		String value = "9039D3BE24C093AC0020482C /* MoltenVK.xcframework in Frameworks */,";
-		strnew += p_line.replace("$moltenvk_buildphase", value) + "\n";
+		strnew += p_line.replace("$moltenvk_buildphase", "") + "\n";
 	} else if (p_line.contains("$moltenvk_buildgrp")) {
-		String value = "9039D3BD24C093AC0020482C /* MoltenVK.xcframework */,";
-		strnew += p_line.replace("$moltenvk_buildgrp", value) + "\n";
+		strnew += p_line.replace("$moltenvk_buildgrp", "") + "\n";
 
 		// Launch Storyboard
 	} else if (p_line.contains("$plist_launch_screen_name")) {

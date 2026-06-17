@@ -30,5 +30,5 @@
 
 #pragma once
 
-void register_ios_exporter_types();
-void register_ios_exporter();
+void register_tvos_exporter_types();
+void register_tvos_exporter();

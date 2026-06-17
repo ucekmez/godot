@@ -34,11 +34,11 @@
 
 #include "editor/export/editor_export.h"
 
-void register_ios_exporter_types() {
+void register_tvos_exporter_types() {
 	GDREGISTER_VIRTUAL_CLASS(EditorExportPlatformTVOS);
 }
 
-void register_ios_exporter() {
+void register_tvos_exporter() {
 	// TODO: Move to editor_settings.cpp
 #ifdef MACOS_ENABLED
 	EDITOR_DEF("export/ios/ios_deploy", "");
