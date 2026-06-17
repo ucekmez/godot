@@ -407,21 +407,19 @@ String EditorExportPlatformTVOS::_process_config_file_line(const Ref<EditorExpor
 		strnew += p_line.replace("$moltenvk_buildgrp", "") + "\n";
 
 		// Launch Storyboard
+		// tvOS: the bundled launch storyboard is iOS-only ("iOS storyboards do not support
+		// target device type tv") — substitute the placeholders with empty so the project never
+		// references Launch Screen.storyboard.
 	} else if (p_line.contains("$plist_launch_screen_name")) {
-		String value = "<key>UILaunchStoryboardName</key>\n<string>Launch Screen</string>";
-		strnew += p_line.replace("$plist_launch_screen_name", value) + "\n";
+		strnew += p_line.replace("$plist_launch_screen_name", "") + "\n";
 	} else if (p_line.contains("$pbx_launch_screen_file_reference")) {
-		String value = "90DD2D9D24B36E8000717FE1 = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = \"Launch Screen.storyboard\"; sourceTree = \"<group>\"; };";
-		strnew += p_line.replace("$pbx_launch_screen_file_reference", value) + "\n";
+		strnew += p_line.replace("$pbx_launch_screen_file_reference", "") + "\n";
 	} else if (p_line.contains("$pbx_launch_screen_copy_files")) {
-		String value = "90DD2D9D24B36E8000717FE1 /* Launch Screen.storyboard */,";
-		strnew += p_line.replace("$pbx_launch_screen_copy_files", value) + "\n";
+		strnew += p_line.replace("$pbx_launch_screen_copy_files", "") + "\n";
 	} else if (p_line.contains("$pbx_launch_screen_build_phase")) {
-		String value = "90DD2D9E24B36E8000717FE1 /* Launch Screen.storyboard in Resources */,";
-		strnew += p_line.replace("$pbx_launch_screen_build_phase", value) + "\n";
+		strnew += p_line.replace("$pbx_launch_screen_build_phase", "") + "\n";
 	} else if (p_line.contains("$pbx_launch_screen_build_reference")) {
-		String value = "90DD2D9E24B36E8000717FE1 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 90DD2D9D24B36E8000717FE1 /* Launch Screen.storyboard */; };";
-		strnew += p_line.replace("$pbx_launch_screen_build_reference", value) + "\n";
+		strnew += p_line.replace("$pbx_launch_screen_build_reference", "") + "\n";
 
 		// Launch Storyboard customization
 	} else if (p_line.contains("$launch_screen_image_mode")) {
